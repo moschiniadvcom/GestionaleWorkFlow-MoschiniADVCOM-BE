@@ -1,32 +1,25 @@
 import express from 'express';
 import cors from 'cors';
-import sqlite3 from 'sqlite3';
+import pg from 'pg';
+import dotenv from 'dotenv';
 
-sqlite3.verbose();
+dotenv.config();
+
+const db = new pg.Pool({
+    connectionString: process.env.SECRET_DB_CONN_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
+});
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-const db = new sqlite3.Database('workflows.db', (err) => {
+db.connect((err) => {
     if (err) {
-        console.error(err.message);
+        console.error('connection error', err.stack);
     } else {
-        console.log('Connesso al database SQLite');
-
-        db.run(`CREATE TABLE IF NOT EXISTS operations (
-            id INTEGER PRIMARY KEY,
-            name TEXT,
-            description TEXT,
-            date TEXT,
-            deliveryTime TEXT,
-            state TEXT
-        )`, (err) => {
-            if (err) {
-                console.error("Errore durante la creazione della tabella 'operations':", err.message);
-            } else {
-                console.log("Tabella 'operations' già presente/creata con successo");
-            }
-        });
+        console.log('Connesso al database Workflows');
     }
 });
 
@@ -34,65 +27,60 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/api/getOperations', (req, res) => {
-    db.all('SELECT * FROM operations', (err, rows) => {
-        if (err) {
-            res.status(500).send(err);
-            return;
-        } else {
-            res.status(200).json(rows);
-        }
-    });
+app.get('/api/getOperations', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM operations');
+        res.status(200).send(result.rows);
+        console.log(result.rows);
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
 
-app.delete('/api/deleteOperation/:id', (req, res) => {
+app.delete('/api/deleteOperation/:id', async (req, res) => {
     const id = req.params.id;
-    db.run('DELETE FROM operations WHERE id = ?', id, (err) => {
-        if (err) {
-            res.status(500).send(err);
-            return;
-        } else {
-            res.status(200).send('Event deleted');
-        }
-    });
+    
+    try {
+        await db.query('DELETE FROM operations WHERE id = $1', [id]);
+        res.status(200).json({ message: "Operazione eliminata" });
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
 
-app.post('/api/addOperation', (req, res) => {
+app.post('/api/addOperation', async (req, res) => {
     const operation = req.body;
-    db.run('INSERT INTO operations (name, description, date, deliveryTime, state) VALUES (?, ?, ?, ?, ?)', [operation.name, operation.description, operation.date, operation.deliveryTime, operation.state], (err) => {
-        if (err) {
-            res.status(500).send(err);
-            return;
-        } else {
-            res.status(200).send('Event added');
-        }
-    });
+    
+    try {
+        await db.query('INSERT INTO operations (name, description, deliveryTime, state) VALUES ($1, $2, $3, $4)', [operation.name, operation.description, operation.deliveryTime, operation.state]);
+        res.status(201).json({ message: "Operazione aggiunta" });
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
 
-app.patch('/api/updateStateOperation/:id', (req, res) => {
+app.patch('/api/updateStateOperation/:id', async (req, res) => {
     const id = req.params.id;
     const state = req.body.state;
-    db.run('UPDATE operations SET state = ? WHERE id = ?', [state, id], (err) => {
-        if (err) {
-            res.status(500).send(err);
-            return;
-        } else {
-            res.status(200).send('Event state updated');
-        }
-    });
+    
+    try {
+        await db.query('UPDATE operations SET state = $1 WHERE id = $2', [state, id]);
+        res.status(200).json({ message: "Stato operazione aggiornato" });
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
 
-app.patch('/api/updateOperation/:id', (req, res) => {
+app.patch('/api/updateOperation/:id', async (req, res) => {
     const id = req.params.id;
     const operation = req.body;
-    db.run('UPDATE operations SET name = ?, description = ?, date = ?, deliveryTime = ?, state = ? WHERE id = ?', [operation.name, operation.description, operation.date, operation.deliveryTime, operation.state, id], (err) => {
-        if (err) {
-            res.status(500).send(err);
-            return;
-        } else {
-            res.status(200).send('Event updated');
-        }
-    });
+    
+    try {
+        await db.query('UPDATE operations SET name = $1, description = $2, deliveryTime = $3, state = $4 WHERE id = $5', [operation.name, operation.description, operation.deliveryTime, operation.state, id]);
+        res.status(200).json({ message: "Operazione aggiornata" });
+    } catch (err) {
+        res.status(500).send(err);
+    }
 });
 
 app.listen(port, () => {
