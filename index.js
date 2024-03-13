@@ -31,7 +31,6 @@ app.get('/api/getOperations', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM operations');
         res.status(200).send(result.rows);
-        console.log(result.rows);
     } catch (err) {
         res.status(500).send(err);
     }
