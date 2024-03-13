@@ -48,10 +48,9 @@ app.delete('/api/deleteOperation/:id', async (req, res) => {
 });
 
 app.post('/api/addOperation', async (req, res) => {
-    const operation = req.body;
-    
+    const operation  = req.body;
     try {
-        await db.query('INSERT INTO operations (name, description, deliveryTime, state) VALUES ($1, $2, $3, $4)', [operation.name, operation.description, operation.deliveryTime, operation.state]);
+        await db.query('INSERT INTO operations (name, description, delivery_time, state) VALUES ($1, $2, $3, $4)', [operation.name, operation.description, operation.delivery_time, operation.state]);
         res.status(201).json({ message: "Operazione aggiunta" });
     } catch (err) {
         res.status(500).send(err);
@@ -75,7 +74,7 @@ app.patch('/api/updateOperation/:id', async (req, res) => {
     const operation = req.body;
     
     try {
-        await db.query('UPDATE operations SET name = $1, description = $2, deliveryTime = $3, state = $4 WHERE id = $5', [operation.name, operation.description, operation.deliveryTime, operation.state, id]);
+        await db.query('UPDATE operations SET name = $1, description = $2, delivery_time = $3, state = $4 WHERE id = $5', [operation.name, operation.description, operation.delivery_time, operation.state, id]);
         res.status(200).json({ message: "Operazione aggiornata" });
     } catch (err) {
         res.status(500).send(err);
