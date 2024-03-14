@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
 import dotenv from 'dotenv';
-import cron from 'node-cron';
+
 
 dotenv.config();
 
@@ -27,12 +27,6 @@ db.connect((err) => {
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-function keepAlive() {
-    console.log('Server is alive');
-}
-
-cron.schedule('*/10 * * * *', keepAlive);
 
 app.get('/api/getOperations', async (req, res) => {
     try {
