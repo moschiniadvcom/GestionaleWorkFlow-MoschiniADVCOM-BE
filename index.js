@@ -76,7 +76,7 @@ app.patch('/api/updateOperation/:id', async (req, res) => {
     
     try {
         await db.query('UPDATE operations SET name = $1, description = $2, delivery_time = $3, state = $4 WHERE id = $5', [operation.name, operation.description, operation.delivery_time, operation.state, id]);
-        res.status(200).json({ message: "Operazione aggiornata" });
+        res.status(200).json({ message: "Operazione aggiornata", operation: result.rows[0] });
     } catch (err) {
         res.status(500).send(err);
     }
