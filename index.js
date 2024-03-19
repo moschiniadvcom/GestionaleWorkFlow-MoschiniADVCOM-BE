@@ -73,6 +73,10 @@ app.patch('/api/updateStateOperation/:id', async (req, res) => {
 app.patch('/api/updateOperation/:id', async (req, res) => {
     const id = req.params.id;
     const operation = req.body;
+
+    if (!operation.name || !operation.description || !operation.delivery_time || !operation.state) {
+        return res.status(400).json({ errMsg: "Compilare tutti i campi" });
+    }
     
     try {
         await db.query('UPDATE operations SET name = $1, description = $2, delivery_time = $3, state = $4 WHERE id = $5 RETURNING *', [operation.name, operation.description, operation.delivery_time, operation.state, id]);
