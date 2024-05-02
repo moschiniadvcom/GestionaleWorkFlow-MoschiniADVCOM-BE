@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
 import dotenv from 'dotenv';
-
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale/it';
 
 dotenv.config();
 
@@ -50,8 +51,12 @@ app.delete('/api/deleteOperation/:id', async (req, res) => {
 
 app.post('/api/addOperation', async (req, res) => {
     const operation  = req.body;
+
+    const delivery_time_date = new Date(operation.delivery_time);
+    const formatted_delivery_time = format(delivery_time_date, 'dd LLLL yyyy', { locale: it });
+
     try {
-        await db.query('INSERT INTO operations (name, description, delivery_time, state) VALUES ($1, $2, $3, $4)', [operation.name, operation.description, operation.delivery_time, operation.state]);
+        await db.query('INSERT INTO operations (name, description, delivery_time, state) VALUES ($1, $2, $3, $4)', [operation.name, operation.description, formatted_delivery_time, operation.state]);
         res.status(201).json({ message: "Operazione aggiunta" });
     } catch (err) {
         res.status(500).send(err);
