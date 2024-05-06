@@ -52,11 +52,13 @@ app.delete('/api/deleteOperation/:id', async (req, res) => {
 app.post('/api/addOperation', async (req, res) => {
     const operation  = req.body;
 
+    const descriptions = operation.description.map((desc) => desc.description);
+
     const delivery_time_date = new Date(operation.delivery_time);
     const formatted_delivery_time = format(delivery_time_date, 'dd LLLL yyyy', { locale: it });
 
     try {
-        await db.query('INSERT INTO operations (name, description, delivery_time, state) VALUES ($1, $2, $3, $4)', [operation.name, operation.description, formatted_delivery_time, operation.state]);
+        await db.query('INSERT INTO operations (id, name, description, delivery_time, state) VALUES ($1, $2, $3, $4, $5)', [operation.id, operation.name, descriptions, formatted_delivery_time, operation.state]);
         res.status(201).json({ message: "Operazione aggiunta" });
     } catch (err) {
         res.status(500).send(err);
@@ -78,9 +80,16 @@ app.patch('/api/updateStateOperation/:id', async (req, res) => {
 app.put('/api/updateOperation/:id', async (req, res) => {
     const id = req.params.id;
     const operation = req.body;
+
+    const descriptions = operation.description.map((desc) => desc.description);
+
+    const delivery_time_date = new Date(operation.delivery_time);
+    const formatted_delivery_time = format(delivery_time_date, "dd LLLL yyyy", {
+      locale: it,
+    });
     
     try {
-        await db.query('UPDATE operations SET name = $1, description = $2, delivery_time = $3, state = $4 WHERE id = $5', [operation.name, operation.description, operation.delivery_time, operation.state, id]);
+        await db.query('UPDATE operations SET name = $1, description = $2, delivery_time = $3, state = $4 WHERE id = $5', [operation.name, descriptions, formatted_delivery_time, operation.state, id]);
         res.status(200).json({ message: "Operazione aggiornata" });
     } catch (err) {
         res.status(500).send(err);
